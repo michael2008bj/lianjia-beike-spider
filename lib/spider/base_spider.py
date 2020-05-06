@@ -12,6 +12,7 @@ import lib.utility.version
 import random
 
 thread_pool_size = 50
+# thread_pool_size = 1
 
 # 防止爬虫被禁，随机延迟设定
 # 如果不想delay，就设定False，

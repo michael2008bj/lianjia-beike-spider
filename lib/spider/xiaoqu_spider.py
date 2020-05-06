@@ -5,6 +5,7 @@
 # 爬取小区数据的爬虫派生类
 
 import re
+import json
 import threadpool
 from bs4 import BeautifulSoup
 from lib.item.xiaoqu import *
@@ -15,7 +16,6 @@ from lib.utility.path import *
 from lib.zone.area import *
 from lib.utility.log import *
 import lib.utility.version
-import re
 
 
 class XiaoQuBaseSpider(BaseSpider):
@@ -64,9 +64,15 @@ class XiaoQuBaseSpider(BaseSpider):
 
         # 获得总的页数
         try:
-            page_box = soup.find_all('div', class_='page-box')[0]
-            matches = re.search('.*"totalPage":(\d+),.*', str(page_box))
-            total_page = int(matches.group(1))
+            page_box = soup.find_all('div', class_='page-box')[-1]
+            # page_box = soup.find('div', class_='page-box.house-lst-page-box')
+            page_info = page_box['page-data']
+            print(page_info)
+            page_info_dict = json.loads(page_info)
+            total_page = page_info_dict['totalPage']
+            print('total_page of {0} is {1}'.format(area, total_page))
+            # matches = re.search('.*"totalPage":(\d+),.*', str(page_box))
+            # total_page = int(matches.group(1))
         except Exception as e:
             print("\tWarning: only find one page for {0}".format(area))
             print(e)
@@ -87,22 +93,28 @@ class XiaoQuBaseSpider(BaseSpider):
                 price = house_elem.find('div', class_="totalPrice")
                 name = house_elem.find('div', class_='title')
                 on_sale = house_elem.find('div', class_="xiaoquListItemSellCount")
+                url = house_elem.find('a')['href']
+                print(url)
                 # print(type(house_elem))
                 # print(house_elem)
                 xiaoqu_id = house_elem['data-id']
                 print(xiaoqu_id)
-                position_info = house_elem.find('div', class_="positionInfo").text
-                position_info_l = position_info.split(' / ')
-                building_type = position_info_l[0]
-                built_time = position_info_l[1].replace('建成', '').strip()
 
+                position_info = house_elem.find('div', class_="positionInfo").text
+                position_info_no_space = re.sub("\s", '', position_info)
+                position_info_l = position_info_no_space.split('/')
+                building_type = '|'.join(position_info_l[:-1])
+                built_time = position_info_l[-1].replace('建成', '')
+                print(building_type)
+                print(built_time)
+                print('='*30)
                 # 继续清理数据
                 price = price.text.strip()
                 name = name.text.replace("\n", "")
                 on_sale = on_sale.text.replace("\n", "").strip()
-                xiaoqu_info = [district, area, name, xiaoqu_id, price, building_type, built_time, on_sale]
+                xiaoqu_info = [district, area, name, xiaoqu_id, price, building_type, built_time, on_sale, url]
                 # 作为对象保存
-                xiaoqu = XiaoQu()
+                xiaoqu = XiaoQu(xiaoqu_info)
                 xiaoqu_list.append(xiaoqu)
         return xiaoqu_list
 
@@ -153,5 +165,6 @@ if __name__ == "__main__":
     # urls = get_xiaoqu_area_urls()
     # print urls
     # get_xiaoqu_info("sh", "beicai")
-    spider = XiaoQuBaseSpider("lianjia")
+    # spider = XiaoQuBaseSpider("lianjia")
+    spider = XiaoQuBaseSpider("ke")
     spider.start()

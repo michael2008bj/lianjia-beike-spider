@@ -34,7 +34,9 @@ def get_districts(city):
     url = 'https://{0}.{1}.com/xiaoqu/'.format(city, SPIDER_NAME)
     headers = create_headers()
     response = requests.get(url, timeout=10, headers=headers)
+    print(response)
     html = response.content
+    print(html)
     root = etree.HTML(html)
     elements = root.xpath(CITY_DISTRICT_XPATH)
     en_names = list()
@@ -43,11 +45,13 @@ def get_districts(city):
         link = element.attrib['href']
         en_names.append(link.split('/')[-2])
         ch_names.append(element.text)
-
+    if en_names or ch_names:
         # 打印区县英文和中文名列表
-    for index, name in enumerate(en_names):
-        chinese_city_district_dict[name] = ch_names[index]
-        # print(name + ' -> ' + ch_names[index])
+        for index, name in enumerate(en_names):
+            chinese_city_district_dict[name] = ch_names[index]
+            print(name + ' -> ' + ch_names[index])
+    else:
+        print('captcha needed!')
     return en_names
 
 
