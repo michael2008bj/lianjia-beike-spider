@@ -15,6 +15,7 @@ from lib.utility.path import *
 from lib.zone.area import *
 from lib.utility.log import *
 import lib.utility.version
+import re
 
 
 class XiaoQuBaseSpider(BaseSpider):
@@ -55,7 +56,9 @@ class XiaoQuBaseSpider(BaseSpider):
         logger.info(page)
 
         headers = create_headers()
+        # proxies = {"http": "http://proxy.cmcc:8080", "https": "http://proxy.cmccc:8080"}
         response = requests.get(page, timeout=10, headers=headers)
+        # response = requests.get(page, timeout=10, headers=headers, proxies=proxies)
         html = response.content
         soup = BeautifulSoup(html, "lxml")
 
@@ -84,14 +87,22 @@ class XiaoQuBaseSpider(BaseSpider):
                 price = house_elem.find('div', class_="totalPrice")
                 name = house_elem.find('div', class_='title')
                 on_sale = house_elem.find('div', class_="xiaoquListItemSellCount")
+                # print(type(house_elem))
+                # print(house_elem)
+                xiaoqu_id = house_elem['data-id']
+                print(xiaoqu_id)
+                position_info = house_elem.find('div', class_="positionInfo").text
+                position_info_l = position_info.split(' / ')
+                building_type = position_info_l[0]
+                built_time = position_info_l[1].replace('建成', '').strip()
 
                 # 继续清理数据
                 price = price.text.strip()
                 name = name.text.replace("\n", "")
                 on_sale = on_sale.text.replace("\n", "").strip()
-
+                xiaoqu_info = [district, area, name, xiaoqu_id, price, building_type, built_time, on_sale]
                 # 作为对象保存
-                xiaoqu = XiaoQu(chinese_district, chinese_area, name, price, on_sale)
+                xiaoqu = XiaoQu()
                 xiaoqu_list.append(xiaoqu)
         return xiaoqu_list
 
