@@ -56,7 +56,6 @@ class XiaoQuBaseSpider(BaseSpider):
         logger.info(page)
 
         headers = create_headers()
-        # proxies = {"http": "http://proxy.cmcc:8080", "https": "http://proxy.cmccc:8080"}
         response = requests.get(page, timeout=10, headers=headers)
         # response = requests.get(page, timeout=10, headers=headers, proxies=proxies)
         html = response.content
@@ -64,15 +63,21 @@ class XiaoQuBaseSpider(BaseSpider):
 
         # 获得总的页数
         try:
-            page_box = soup.find_all('div', class_='page-box')[-1]
-            # page_box = soup.find('div', class_='page-box.house-lst-page-box')
-            page_info = page_box['page-data']
-            print(page_info)
-            page_info_dict = json.loads(page_info)
-            total_page = page_info_dict['totalPage']
-            print('total_page of {0} is {1}'.format(area, total_page))
-            # matches = re.search('.*"totalPage":(\d+),.*', str(page_box))
-            # total_page = int(matches.group(1))
+            page_box_list = soup.find_all('div', class_='page-box.house-lst-page-box')
+            if page_box_list:
+                page_box = page_box_list[-1]
+                # page_box = soup.find('div', class_='page-box.house-lst-page-box')
+                page_info = page_box['page-data']
+                print(page_info)
+                page_info_dict = json.loads(page_info)
+                total_page = page_info_dict['totalPage']
+                print('total_page of {0} is {1}'.format(area, total_page))
+                # matches = re.search('.*"totalPage":(\d+),.*', str(page_box))
+                # total_page = int(matches.group(1))
+            else:
+                logger.warning('cannot find page box in {0}'.format(page))
+                logger.warning(html)
+
         except Exception as e:
             print("\tWarning: only find one page for {0}".format(area))
             print(e)
